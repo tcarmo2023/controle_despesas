@@ -1,17 +1,18 @@
 import streamlit as st
 import pandas as pd
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2 import service_account
 import plotly.express as px
 from datetime import datetime
-import json
 
-# Configuração das APIs do Google
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+# Configuração do escopo
+scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
 # Lê credenciais do Streamlit Secrets
 service_account_info = dict(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
+creds = service_account.Credentials.from_service_account_info(service_account_info, scopes=scope)
+
+# Autenticação no Google Sheets
 client = gspread.authorize(creds)
 
 # Abre a planilha
