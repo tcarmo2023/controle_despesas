@@ -4,10 +4,14 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import plotly.express as px
 from datetime import datetime
+import json
 
 # Configuração das APIs do Google
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+
+# Lê credenciais do Streamlit Secrets
+service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
 client = gspread.authorize(creds)
 
 # Abre a planilha
@@ -44,7 +48,7 @@ with st.form("registro_despesa"):
     submitted = st.form_submit_button("Registrar")
     if submitted:
         try:
-            # Salva na planilha no formato YYYY-MM-DD (Google Sheets entende melhor)
+            # Salva na planilha no formato YYYY-MM-DD
             sheet.append_row([data.strftime("%Y-%m-%d"), tipo, valor])
             st.success("✅ Despesa registrada com sucesso!")
         except Exception as e:
