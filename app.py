@@ -10,7 +10,7 @@ import json
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 # Lê credenciais do Streamlit Secrets
-service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+service_account_info = dict(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
 client = gspread.authorize(creds)
 
