@@ -4,31 +4,40 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import plotly.express as px
 from datetime import datetime, date
-import json
 import re
 
 # Configuração das APIs do Google
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-# Lê credenciais do Streamlit Secrets (string JSON → dicionário)
+# Lê credenciais do Streamlit Secrets (já é um dicionário)
 @st.cache_resource
 def get_google_client():
     try:
-        service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+        # O Streamlit Secrets já retorna um dicionário, não precisa converter de JSON
+        service_account_info = dict(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
         creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
         client = gspread.authorize(creds)
         return client
     except Exception as e:
         st.error(f"Erro de autenticação: {e}")
+        st.error("Verifique se as credenciais do serviço estão corretamente configuradas nos secrets do Streamlit")
         return None
 
 client = get_google_client()
 
-# Abre a planilha
-try:
-    sheet = client.open("controle_despesas").sheet1
-except Exception as e:
-    st.error(f"Erro ao acessar planilha: {e}")
+# Abre a planilha apenas se a autenticação foi bem-sucedida
+if client is not None:
+    try:
+        sheet = client.open("controle_despesas").sheet1
+    except Exception as e:
+        st.error(f"Erro ao acessar planilha: {e}")
+        st.error("Verifique se:")
+        st.error("1. O nome da planilha está correto ('controle_despesas')")
+        st.error("2. O service account tem permissão para acessar a planilha")
+        st.error("3. A planilha foi compartilhada com o e-mail do service account")
+        st.stop()
+else:
+    st.error("Não foi possível autenticar com o Google Sheets. Verifique as configurações.")
     st.stop()
 
 # Função para carregar dados da planilha com cache
@@ -123,7 +132,7 @@ with tab1:
                     sheet.append_row([data.strftime("%Y-%m-%d"), tipo.strip(), valor_formatado])
                     st.success("✅ Despesa registrada com sucesso!")
                     # Limpa cache para recarregar dados
-                    load_data.clear()
+                    st.cache_data.clear()
                 except Exception as e:
                     st.error(f"❌ Erro ao registrar: {e}")
 
